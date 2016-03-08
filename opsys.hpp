@@ -70,7 +70,7 @@ struct Op
 
     void execute()
     {
-        size_t args[16+1] = {(size_t)this};
+        size_t args[16] = { 0 };
 
         for (uint32_t i=0; i<m_numParams; i++)
         {
@@ -78,32 +78,31 @@ struct Op
             switch (p.type)
             {
             case OPT_STR:
-                args[i+1] = (size_t)&p.str;
+                args[i] = (size_t)&p.str;
                 break;
             default: // float and integer types (it's a union!)
-                args[i+1] = (p.chans > 1 ? (size_t)p.ints : (size_t)p.ints[0]);
+                args[i] = (p.chans > 1 ? (size_t)p.ints : (size_t)p.ints[0]);
                 break;
             }
         }
 
-        callFunc(m_execFunc, args, m_numParams+1, this);
+        callFunc(m_execFunc, args, m_numParams, this);
     }
 
 
-    void FooOpExec1(Op *op, const Size2 &size, float val, const std::string &str)
+    void FooOpExec1(const Size2 &size, float val, const std::string &str)
     {
         std::cout << "m_name = " << this->m_name << std::endl;
         std::cout << size.x << ", " << size.y << std::endl;
         std::cout << val << std::endl;
         std::cout << str << std::endl;        
         std::cout << "this = " << this << std::endl; 
-        std::cout << "op = " << op << std::endl;
         std::cout << "m_numParams = " << this->m_numParams << std::endl;
         std::cout << "m_execFunc = " << m_execFunc << std::endl;        
         std::cout << "-----------------------" << std::endl;
     }
 
-    void FooOpExec2(Op *op, const Size2 &size, float val, const Rect &rect, float val2, const std::string &str)
+    void FooOpExec2(const Size2 &size, float val, const Rect &rect, float val2, const std::string &str)
     {
         std::cout << "m_name = " << this->m_name << std::endl;
         std::cout << size.x << ", " << size.y << std::endl;
@@ -117,7 +116,7 @@ struct Op
         std::cout << "-----------------------" << std::endl;
     }
     
-    void FooOpExec3(Op *op)
+    void FooOpExec3()
     {
         std::cout << "m_name = " << this->m_name << std::endl;
         //std::cout << val << std::endl;
