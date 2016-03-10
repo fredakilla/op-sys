@@ -5,12 +5,14 @@ numArgs dq 0
 stack   dq 0
 funcPtr dq 0
 opPtr	dq 0
-saveRsp dq 0
 
 .code
 callFunc proc funcPtrDontUse:ptr, stackDontUse:ptr, numArgsDontUse:dword, opPtrP:ptr
     push    rdi
     push    rsi
+
+	push    rbp                 ; save frame pointer
+    mov     rbp, rsp            ; fix stack pointer  
 
     mov     [funcPtr], rcx    ; simplifies register allocation a lot :)
     mov     [stack], rdx      ; don't use passed variable names above!
@@ -19,8 +21,6 @@ callFunc proc funcPtrDontUse:ptr, stackDontUse:ptr, numArgsDontUse:dword, opPtrP
 
 ; -------------------- allocate stack space and copy parameters --------------------
 
-	mov		[saveRsp], rsp    ; save rsp
-
     mov     rcx, [numArgs]    ; number of passed arguments
     sub     rcx, 3            ; 3 of them will be passed in regs
     cmp     rcx, 0            ; some left for the stack?
@@ -28,10 +28,7 @@ callFunc proc funcPtrDontUse:ptr, stackDontUse:ptr, numArgsDontUse:dword, opPtrP
     lea     r10, [rcx*8]      ; calculate required stack space
     sub     rsp, r10          ; reserve stack space
 
-    mov     r11, rsp          ; align stack pointer to 16 bytes for later call 
-    and     r11, 15           ; mod 16
-    jz      dontAlign         ; is already 16 bytes aligned?
-    sub     rsp, r11
+	and     rsp, not 8          ; align stack to 16 bytes
 
 dontAlign:
 
@@ -73,12 +70,15 @@ noParams:
 ; -------------------- call execution handler for operator --------------------
 
     sub     rsp, 20h          ; reserve additional space for 4 arguments
-    call    [funcPtr]         ; call function pointer	
+	and     rsp, not 8          ; align stack to 16 bytes
 
-	mov     rsp, [saveRsp]	  ; restore rsp
+    call    [funcPtr]         ; call function pointer
 
 ; -------------------- restore non-volatile registers --------------------   
 	
+	mov     rsp, rbp            ; restore stack pointer
+    pop     rbp                 ; restore frame pointer
+
     pop     rsi
     pop     rdi
     ret
